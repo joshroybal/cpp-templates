@@ -291,21 +291,28 @@ typename AVL<Type>::Node* AVL<Type>::remove(Node* p, const Type& key)
    else { 
       // node with only one child or no child 
       if (p->left == 0) { 
-         Node* leaf = p->right;
+         Node* node = p->right;
          delete p;
-         return leaf; 
+         return node; 
       } else if (p->right == NULL) { 
-         Node* leaf = p->left;
+         Node* node = p->left;
          delete p;
-         return leaf; 
+         return node; 
       } 
       Node* node = max(p->left);
       p->key = node->key;
       p->left = remove(p->left, node->key);
+      /*
+      Node* node = min(p->right);
+      p->key = node->key;
+      p->right = remove(p->right, node->key);
+      */
    }
 
    // If the tree had only one node then return  
    if ( !p ) return p;
+
+   p->height = 1 + std::max(h(p->left), h(p->right));
 
    // Left Left Case
    if (balance(p) > 1 && balance(p->left) > 0)

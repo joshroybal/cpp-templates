@@ -1,133 +1,160 @@
 #include <cstdlib>
-#include "bst.hpp"
+#include <ctime>
+#include "avl.hpp"
+
+int random(int);
+void initialize(int [], int);
+void shuffle(int [], int);
+template<class Type> void displayTree(BST<Type>*);
 
 int main(int argc, char* argv[]) {
-   if ( argc < 2 ) {
-      std::cerr << "Usage: " << argv[0] << " n" << std::endl;
+   if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " n\n";
       return 1;
    }
-  
-   // error trap invalid input 
-   std::istringstream isstr(argv[1]);
-   int tmp;
-   isstr >> tmp;
-   if ( !isstr.eof() ) {
-      std::cerr << "error reading integer" << std::endl;
+   std::string nstr(argv[1]);
+   std::istringstream isstr(nstr);
+   int n;
+   isstr >> n;
+   if (n < 0) {
+      std::cerr << "n must be postive\n";
       return 1;
    }
-   if (tmp <= 0 || tmp > 1000) {
-      std::cerr << "0 < n <= 1000" << std::endl;
-      return 1;
-   }
-   
-   const int N = tmp;
-  
-   // test for Type = int
+   const int LIM = n;
+   srand(time(0));
+   // test template class for case Type is int
    BST<int>* Integers = new BST<int>();
-
-   // insert randomly shuffled series into numeric tree
-   int* rnd = new int[N];
-   for (int i = 0; i < N; i++) rnd[i] = i+1;
-   for (int i = 0; i < N; i++) {
-      int idx = N * (rand() / 2147483647.0F);
-      if (idx != i) {
-         tmp = rnd[i];
-         rnd[i] = rnd[idx];
-         rnd[idx] = tmp;
-      }
+   int* arr = new int[LIM];
+   initialize(arr, LIM);
+   shuffle(arr, LIM);
+   for (int i = 0; i < LIM; i++) {
+      std::cout << arr[i] << ' ';
+      Integers->Insert(arr[i]);
    }
-   for (int i = 0; i < N; i++) {
-      std::cout << rnd[i] << std::endl;
-      Integers->Insert(rnd[i]);
-   }
-   delete [] rnd;
+   std::cout << std::endl;
+   delete [] arr;
+   displayTree(Integers);
+   std::stringstream internalFile;
+   Integers->Serialize(internalFile);
+   std::cout << "tree serialized to internal file" << std::endl;
 
-   std::cout << "pre-order" << std::endl;
-   Integers->PreOrder();
-   std::cout << "in-order" << std::endl;
-   Integers->InOrder();
-   std::cout << "post-order" << std::endl;
-   Integers->PostOrder();
-   std::cout << "h = " << Integers->Height() << std::endl;
-   Integers->Serialize("integers.dat");
-   std::cout << "tree serialized to file" << std::endl;
    // node removal test
-   for (int i = 0; i < N; i++) {
-      int rnd = N * (rand() / 2147483647.0F);
+   std::cout << "node removal tests" << std::endl;
+   for (int i = 0; i < LIM; i++) {
+      int rnd = random(LIM);
+      std::cout << rnd << ' ';
       Integers->Remove(rnd);
    }
-   std::cout << "tree after pruning" << std::endl;
-   std::cout << "pre-order" << std::endl;
-   Integers->PreOrder();
-   std::cout << "in-order" << std::endl;
-   Integers->InOrder();
-   std::cout << "post-order" << std::endl;
-   Integers->PostOrder();
-   std::cout << "h = " << Integers->Height() << std::endl;
+   std::cout << "\ntree after pruning" << std::endl;
+   displayTree(Integers);
+   delete Integers;   
+   std::cout << "tree deleted" << std::endl;
+   
+   std::cout << internalFile.str() << std::endl;
+   
+   Integers = new BST<int>();
+   Integers->Deserialize(internalFile);
+   std::cout << "tree de-serialized from internal file" << std::endl;
+   displayTree(Integers);
+   Integers->Serialize("integers.dat");
+   std::cout << "tree serialized to external file" << std::endl;   
    delete Integers;
    std::cout << "tree deleted" << std::endl;
+
+   // external file de-serialization test
    Integers = new BST<int>();
    Integers->Deserialize("integers.dat");
-   std::cout << "tree de-serialized from file" << std::endl;
-   std::cout << "pre-order" << std::endl;
-   Integers->PreOrder();
-   std::cout << "in-order" << std::endl;
-   Integers->InOrder();
-   std::cout << "post-order" << std::endl;
-   Integers->PostOrder();
-   std::cout << "h = " << Integers->Height() << std::endl;
+   displayTree(Integers);
    delete Integers;
    std::cout << "tree deleted" << std::endl;
 
-   // test Type = std::string
+   
+   // test template class for Type is std::string
    BST<std::string>* Strings = new BST<std::string>();
-
-   std::ifstream ifstr("strings", std::ifstream::in);
+   
+   std::ifstream ifstr("words.txt", std::ifstream::in);
    std::string str;
-   int i = 0;
-   while ( i < N ) {
-      if ( ifstr >> str ) Strings->Insert(str);
-      ++i;
+   n = 0;
+   while ( ifstr >> str && n < LIM ) {
+      Strings->Insert(str);
+      ++n;
    }
-   std::cout << "pre-order" << std::endl;
-   Strings->PreOrder();   
-   std::cout << "in-order" << std::endl;
-   Strings->InOrder();
-   std::cout << "post-order" << std::endl;
-   Strings->PostOrder();   
-   std::cout << "h = " << Strings->Height() << std::endl;
-   Strings->Serialize("strings.dat");
-   std::cout << "tree serialized to file" << std::endl;
+   ifstr.close();
+   
+   displayTree(Strings);
+   std::stringstream wordFile;
+   Strings->Serialize(wordFile);
+   std::cout << "tree serialized to internal file" << std::endl;
+
    // node removal test
-   ifstr.open("strings", std::ifstream::in);
-   i = 0;
-   while ( i < N ) {
-      if ( i%2 )
-         if ( ifstr >> str ) Strings->Remove(str);
-      ++i;
+   ifstr.open("words.txt", std::ifstream::in);
+   n = 0;
+   while ( ifstr >> str && n < LIM ) {
+      if ( n%2 ) Strings->Remove(str);
+      ++n;
    }
+   ifstr.close();
    std::cout << "tree after pruning" << std::endl;
-   std::cout << "pre-order" << std::endl;
-   Strings->PreOrder();   
-   std::cout << "in-order" << std::endl;
-   Strings->InOrder();
-   std::cout << "post-order" << std::endl;
-   Strings->PostOrder();   
-   std::cout << "h = " << Strings->Height() << std::endl;
+   displayTree(Strings);   
    delete Strings;
-   Strings = new BST<std::string>();
    std::cout << "tree deleted" << std::endl;
+
+   std::cout << wordFile.str() << std::endl;
+
+   Strings = new BST<std::string>();
+   Strings->Deserialize(wordFile);
+   std::cout << "tree de-serialized from internal file" << std::endl;
+   displayTree(Strings);
+   Strings->Serialize("strings.dat");
+   std::cout << "tree serialized to external file" << std::endl;
+   delete Strings;
+   std::cout << "tree deleted" << std::endl;
+   
+   // external file de-serialization test
+   Strings = new BST<std::string>();
    Strings->Deserialize("strings.dat");
-   std::cout << "tree de-serialized from file" << std::endl;
-   std::cout << "pre-order" << std::endl;
-   Strings->PreOrder();   
-   std::cout << "in-order" << std::endl;
-   Strings->InOrder();
-   std::cout << "post-order" << std::endl;
-   Strings->PostOrder();   
-   std::cout << "h = " << Strings->Height() << std::endl;
+   displayTree(Strings);
    delete Strings;
    std::cout << "tree deleted" << std::endl;
 
    return 0;
+}
+
+// generate pseudo-random integer x in range 1 <= x <= n
+int random(int n)
+{
+   return 1 + n * (rand() / 2147483647.0F);
+}
+
+void initialize(int arr[], int n)
+{
+   for (int i = 0; i < n; i++) arr[i] = i+1;
+}
+
+void shuffle(int arr[], int n)
+{
+   for (int i = 0; i < n; i++) {
+      int rndidx = n * (rand() / 2147483647.0F);
+      int tmp = arr[i];
+      arr[i] = arr[rndidx];
+      arr[rndidx] = tmp;
+   }
+}
+
+template<class Type>
+void displayTree(BST<Type>* Tree)
+{
+   std::cout << "\npre-order" << std::endl;
+   Tree->PreOrder();
+   std::cout << "\nin-order" << std::endl;
+   Tree->InOrder();
+   std::cout << "\npost-order" << std::endl;
+   Tree->PostOrder();
+   std::cout << "\nlevel-order" << std::endl;
+   Tree->LevelOrder();
+   std::cout << "\nh = " << Tree->Height() << std::endl;
+   std::cout << "size = " << Tree->Size() << std::endl;
+   Tree->Min();
+   Tree->Max();
+   std::cout << std::endl;
 }

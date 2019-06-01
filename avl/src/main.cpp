@@ -1,3 +1,5 @@
+#include <cstdlib>
+#include <ctime>
 #include "avl.hpp"
 
 int random(int);
@@ -14,11 +16,12 @@ int main(int argc, char* argv[]) {
    std::istringstream isstr(nstr);
    int n;
    isstr >> n;
-   if (n < 2) {
+   if (n < 0) {
       std::cerr << "n must be postive\n";
       return 1;
    }
    const int LIM = n;
+   srand(time(0));
    // test template class for case Type is int
    AVL<int>* Integers = new AVL<int>();
    int* arr = new int[LIM];
@@ -47,7 +50,7 @@ int main(int argc, char* argv[]) {
    delete Integers;   
    std::cout << "tree deleted" << std::endl;
    
-   std::cout << internalFile.str() << std::endl;
+   // std::cout << internalFile.str() << std::endl;
    
    Integers = new AVL<int>();
    Integers->Deserialize(internalFile);
@@ -61,6 +64,7 @@ int main(int argc, char* argv[]) {
    // external file de-serialization test
    Integers = new AVL<int>();
    Integers->Deserialize("integers.dat");
+   std::cout << "tree de-serialized from external file" << std::endl;
    displayTree(Integers);
    delete Integers;
    std::cout << "tree deleted" << std::endl;
@@ -96,7 +100,7 @@ int main(int argc, char* argv[]) {
    delete Strings;
    std::cout << "tree deleted" << std::endl;
 
-   std::cout << wordFile.str() << std::endl;
+   // std::cout << wordFile.str() << std::endl;
 
    Strings = new AVL<std::string>();
    Strings->Deserialize(wordFile);
@@ -110,6 +114,7 @@ int main(int argc, char* argv[]) {
    // external file de-serialization test
    Strings = new AVL<std::string>();
    Strings->Deserialize("strings.dat");
+   std::cout << "tree de-serialized from external file" << std::endl;
    displayTree(Strings);
    delete Strings;
    std::cout << "tree deleted" << std::endl;
